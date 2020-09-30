@@ -1,0 +1,135 @@
+---
+title: "Day 6"
+author: "Yifan (Flora) He"
+date: "9/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(RColorBrewer)
+library(ggbeeswarm)
+library(stargazer)
+```
+
+
+## read in lobster data
+```{r}
+lobsters <- read_csv(here("data", "lter_lobster.csv")) %>% 
+  clean_names()
+```
+
+## histogram
+```{r}
+lobsters <- lobsters %>% 
+  uncount(count) # convert to tidy data by expanding count data
+
+ggplot(data = lobsters, aes(x = size)) +
+  geom_histogram() + 
+  labs(x = "Lobster carapace length(mm)",
+       y = "Frequency",
+       title = "Lobster size distribution")
+```
+## Quantile-Quantile plot to explore normality
+
+```{r}
+ggplot(data = lobsters, aes(sample = size))+
+  geom_qq()+
+  facet_wrap(~site) # break qq plot by site
+```
+
+## boxplot
+
+```{r}
+ggplot(data = lobsters, aes (x = site, y = size)) +
+  geom_boxplot(aes(fill = site)) +
+  theme_minimal() +
+  labs(x = "study site")
+```
+
+## jitter plot
+
+```{r}
+ggplot(lobsters, aes (x = site, y = size))+
+  geom_jitter(width = 0.1, alpha = 0.3, size = 0.6, aes(color = site)) + 
+  geom_boxplot(alpha = 0.3, outlier.colour = "Transparent")
+```
+
+## beeswarm plot
+
+```{r}
+ggplot(lobsters, aes(x = site, y = size))+
+  geom_beeswarm(aes(color = site))+
+  geom_violin(alpha = 0.5, aes(color = site))+
+  facet_wrap(~site)
+```
+
+## summary statistics
+```{r}
+count_by_site <- lobsters %>% 
+  count(site)
+lobster_summary <- lobsters %>% 
+  group_by(site) %>% 
+  summary(mean_size = mean(size),
+          sd_size = sd(size))
+```
+
+## hypothesis testing
+```{r}
+sample_1 <- c(2,3, 5, 5, 5)
+sample_2 <- c(10,9, 6, 12,5, 2)
+
+example_ttest <- t.test(sample_1, sample_2)
+```
+
+## make your own data frame
+
+```{r}
+df <- tribble(
+  ~ annie, ~ Q, ~ tommy,
+  1, 2, 3,
+  10,12,15
+)
+```
+
+## simple linear regression
+
+using trees dataset
+
+```{r}
+ggplot(data = trees, aes (x = Girth, y = Volume))+
+  geom_point() +
+  geom_smooth(method = "lm") # explore
+
+
+```
+
+## model linear relationship
+```{r}
+tree_lm <-lm (Volume ~ Girth, data = trees)
+summary(tree_lm)
+plot(tree_lm) # diagnostic models
+```
+
+in-line formula: 
+$y = mx + b$ 
+
+## multiple linear regression:
+
+```{r}
+tree_mlr <- lm (Volume ~ Height + Girth, data = trees)
+summary(tree_mlr)
+plot(tree_mlr)
+```
+
+## summary table 
+stargaze is one way; broom package is another. 
+
+```{r, results = "asis"}
+stargazer(tree_mlr, type = "html")
+```
+
+
